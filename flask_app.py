@@ -6,9 +6,12 @@ import docx # using python-docx 0.8.4
 import os
 import zipstream
 import zipfile
+import time
 
 app = Flask(__name__)
 
+from schedule import second
+app.register_blueprint(second, url_prefix='/schedule')
 
 def get_column_by_name(sheet,name):
   ''' Return Excel column (A,B,C...) based on column heading '''
@@ -33,7 +36,16 @@ def create_aca_file(firstname,lastname,filepath):
     document = docx.Document(filepath)
     tables = document.tables
     table = tables[0]
-    table.cell(0,0).text = u'To:   ' + firstname + ' ' + lastname
+    # add name
+    cell = table.cell(0,0)
+    cell.text = u'To:   ' + firstname + ' ' + lastname
+    run = cell.paragraphs[0].runs[0]
+    run.font.bold = True
+    cell2 = table.cell(0,1)
+    # add date
+    cell2.text = u'Date: ' + time.strftime("%m/%d/%Y")
+    run2 = cell2.paragraphs[0].runs[0]
+    run2.font.bold = True
     document.save('aca_form_' + firstname + '_' + lastname + '.docx')
 
 @app.route('/')
@@ -96,7 +108,7 @@ def list_files():
                 <p><a href='/download'>Click here to download ACA forms without course info</a></p>
                 <p>Step 2: Upload schedule.xlsx excel file</p>
 
-                <form action="/insertschedule" method="post" enctype="multipart/form-data">
+                <form action="/schedule" method="post" enctype="multipart/form-data">
                     <input type="file" name="data_file" />
                     <input type="submit" />
                 </form>
